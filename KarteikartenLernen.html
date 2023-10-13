@@ -83,7 +83,15 @@
         padding: 20px;
         width: 80%;
         border-radius: 5px;
-    } 
+    }
+     
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+    }
     </style>
     <!-- MathJax-Konfiguration im head-Bereich -->
     <script type="text/x-mathjax-config">
@@ -124,9 +132,10 @@
 
     <div id="fileHandling" style="display: none;">
       <input type="file" id="fileInput">
-      <a id="downloadLink" style="display: none" download="flashcards.csv" href="data:text/csv;charset=utf-8,"></a>
       <button id="downloadButton">Flashcards als CSV herunterladen</button>
+      <a id="downloadLink" style="display: none" download="flashcards.csv" href="data:text/csv;charset=utf-8,"></a>
     </div>
+    
     <div id="flashcardView" style="display: none;">
         <table>
             <thead>
@@ -147,18 +156,28 @@
         <span id="closeModalButton" style="float: right; cursor: pointer;">Schließen [X]</span>
         <!-- Hier kannst du das Formular zum Bearbeiten oder Hinzufügen von Karteikarten platzieren -->
         <form id="editCardForm">
-          <label for="modalQuestion">Frage:</label>
-          <input type="text" id="modalQuestion" name="modalQuestion" required>
-          <br>
-          <label for="modalAnswer">Antwort:</label>
-          <input type="text" id="modalAnswer" name="modalAnswer" required>
-          <br>
+          <!-- Frage-Eingabefeld -->
+          <div class="input-group">
+            <label for="modalQuestion">Frage:</label>
+            <textarea id="modalQuestion" name="modalQuestion" rows="4" style="width: 100%;" required></textarea>
+          </div>
+
+          <!-- Antwort-Eingabefeld -->
+          <div class="input-group">
+            <label for="modalAnswer">Antwort:</label>
+            <textarea id="modalAnswer" name="modalAnswer" rows="4" style="width: 100%;" required></textarea>
+          </div>
+          
           <input type="submit" value="Speichern">
           <!-- Buttons für die Navigation -->
           <button type="button" id="modalPreviousCardButton">Vorherige Karteikarte</button>
           <button type="button" id="modalNextCardButton">Nächste Karteikarte</button>
+          <button type="button" id="modalNewCardButton">Neue Karteikarte</button>
 
         </form>
+        <!-- Erfolgsmeldung -->
+        <div id="modalSuccessMessage" style="display: none; color: green; margin-top: 10px;">Die Karteikarte wurde erfolgreich gespeichert!</div>
+
       </div>
     </div>
     <!-- Footer -->
@@ -177,34 +196,21 @@
 
     // Funktion zum Lesen von CSV in ein Array
     function parseCSV(csv) {
-	    // Nehmen wir an, 'csvFile' ist das File-Objekt, das von einem Datei-Upload-Feld stammt
-	    const fileType = csvFile.type; // Der MIME-Typ der Datei
-
-	    // Liste der erlaubten Dateitypen (MIME-Typen)
-	    const allowedFileTypes = ["text/csv", "application/csv", "application/vnd.ms-excel"];
-
 	    const result = [];
 
-	    if (!fileType || allowedFileTypes.includes(fileType)) {
-        // Die Datei hat einen erlaubten Datentyp
-        // Du kannst den Code zum Hochladen oder Einlesen der Datei hier fortsetzen
-		    const lines = csv.split('\n');
-		    const headers = lines[0].split(',');
-		    for (let i = 1; i < lines.length; i++) {
-          const currentLine = lines[i].split(',');
-          if (currentLine.length >= 2) {
-            const questiontext = currentLine[0] ? currentLine[0].trim() : '';
-            const answertext = currentLine[1] ? currentLine[1].trim() : '';
-            if (questiontext !== '' || answertext !== '') {
-              const card = { question: questiontext, answer: answertext };
-              result.push(card);
-            }
+      const lines = csv.split('\n');
+      //const headers = lines[0].split(',');
+      for (let i = 0; i < lines.length; i++) {
+        const currentLine = lines[i].split(',');
+        if (currentLine.length >= 2) {
+          const questiontext = currentLine[0] ? currentLine[0].trim() : '';
+          const answertext = currentLine[1] ? currentLine[1].trim() : '';
+          if (questiontext !== '' || answertext !== '') {
+            const card = { question: questiontext, answer: answertext };
+            result.push(card);
           }
-		    }
-	    } else {
-        // Die Datei hat einen nicht erlaubten Datentyp
-        alert('Ungültiger Dateityp: '+fileType+'  Bitte laden Sie eine CSV-Datei hoch.');
-	    }
+        }
+      }
 
       return result;
     }
@@ -221,13 +227,7 @@
 
     nextCardButton.addEventListener('click', () => {
       currentCard = (currentCard + 1) % flashcards.length;
-      questionElement.innerText = flashcards[currentCard].question;
-      answerElement.innerText = flashcards[currentCard].answer;
-      answerElement.style.display = 'none';
-      // Nachdem die neue Karteikarte geladen wurde, rufe MathJax auf, um die LaTeX-Syntax in dieser Karteikarte zu übersetzen.
-      // Hier wird "questionElement" verwendet, um die LaTeX-Syntax in der Frage der Karteikarte zu übersetzen
-	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, questionElement]); 
-	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, answerElement]); 
+      showFlashcard();
     });
 
     let currentCard = 0;
@@ -244,6 +244,7 @@
           })
           .then(data => {
             flashcards = parseCSV(data);
+            // Update Counter und currentCard
             showFlashcard();
             updateDataCount(flashcards.length);
           })
@@ -291,9 +292,16 @@
 
     // Funktion zum Anzeigen der aktuellen Karte
     function showFlashcard() {
+      if (currentCard > flashcards.length-1) {
+        currentCard = 0;
+      }
       questionElement.innerText = flashcards[currentCard].question;
       answerElement.innerText = flashcards[currentCard].answer;
       answerElement.style.display = 'none';
+      // Nachdem die neue Karteikarte geladen wurde, rufe MathJax auf, um die LaTeX-Syntax in dieser Karteikarte zu übersetzen.
+      // Hier wird "questionElement" verwendet, um die LaTeX-Syntax in der Frage der Karteikarte zu übersetzen
+	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, questionElement]); 
+	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, answerElement]); 
     }
 
     // Zufällige Reihenfolge der Karten
@@ -310,6 +318,7 @@
     }
 
     // Lade die CSV-Datei (wird weiter oben definiert)
+    console.log('csvFile:', csvFile);
     loadCSVFile(csvFile);
 
     // Button für das Mischen
@@ -357,24 +366,26 @@
     }
 
     function renderAllFlashcards() {
-      flashcardTableBody.innerHTML = ''; // Leert die Tabelle
+      if (isAllCardsViewVisible) {
+        flashcardTableBody.innerHTML = ''; // Leert die Tabelle
 
-      // Schleife durch alle Karteikarten und füge sie zur Tabelle hinzu
-      for (let i = 0; i < flashcards.length; i++) {
-        const card = flashcards[i];
-        const row = document.createElement('tr');
-        const questionCell = document.createElement('td');
-        const answerCell = document.createElement('td');
-        
-        questionCell.textContent = card.question;
-        answerCell.textContent = card.answer;
+        // Schleife durch alle Karteikarten und füge sie zur Tabelle hinzu
+        for (let i = 0; i < flashcards.length; i++) {
+          const card = flashcards[i];
+          const row = document.createElement('tr');
+          const questionCell = document.createElement('td');
+          const answerCell = document.createElement('td');
+          
+          questionCell.textContent = card.question;
+          answerCell.textContent = card.answer;
 
-        row.appendChild(questionCell);
-        row.appendChild(answerCell);
+          row.appendChild(questionCell);
+          row.appendChild(answerCell);
 
-        flashcardTableBody.appendChild(row);
+          flashcardTableBody.appendChild(row);
+        }
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, flashcardTableBody]); // Hier MathJax über die Tabelle auslösen
       }
-	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, flashcardTableBody]); // Hier MathJax über die Tabelle auslösen
     }
     
     // JavaScript-Code zum Öffnen und Schließen des Modals
@@ -405,14 +416,39 @@
           question: questionInput.value,
           answer: answerInput.value
       };
+      if (modalCurrentCardIndex >= 0 && modalCurrentCardIndex < flashcards.length) {
+        flashcards[modalCurrentCardIndex]=editedCard;
+      } else {
+        flashcards.push(editedCard);
+        updateDataCount(flashcards.length);
+        modalCurrentCardIndex = flashcards.length-1;
+        renderAllFlashcards();
+      }
+      showSuccessMessage();
       console.log('Bearbeitete Karteikarte:', editedCard);
     });
 
+    // Funktion, um die Erfolgsmeldung anzuzeigen
+    function showSuccessMessage() {
+        const successMessage = document.getElementById('modalSuccessMessage');
+        successMessage.style.display = 'block';
+
+        // Optional: Du kannst die Erfolgsmeldung nach ein paar Sekunden automatisch ausblenden
+        setTimeout(function() {
+            successMessage.style.display = 'none';
+        }, 3000); // Beispiel: 3000 Millisekunden (3 Sekunden)
+    }
+
     // Funktion zum Anzeigen der aktuellen Karteikarte
     function modalDisplayCurrentCard() {
+      if (modalCurrentCardIndex >= 0 && modalCurrentCardIndex < flashcards.length) {
         const currentCard = flashcards[modalCurrentCardIndex];
         questionInput.value = currentCard.question;
         answerInput.value = currentCard.answer;
+      } else {
+        questionInput.value = '';
+        answerInput.value = '';
+      }
     }
     
     
@@ -424,6 +460,8 @@
       if (modalCurrentCardIndex > 0) {
           modalCurrentCardIndex--;
           modalDisplayCurrentCard();
+      } else {
+        modalCurrentCardIndex = 0;
       }
     });
 
@@ -436,6 +474,15 @@
           modalCurrentCardIndex++;
           modalDisplayCurrentCard();
       }
+    });
+
+    // Eventlistener für den "Neue Karteikarte"-Button
+    const modalNewCardButton = document.getElementById('modalNewCardButton');
+    modalNewCardButton.addEventListener('click', function() {
+      //Die Standard-Formularübermittlung wird verhindert
+      event.preventDefault();
+      modalCurrentCardIndex=-1;
+      modalDisplayCurrentCard();
     });
 
     // Schließe das Modal, wenn der Benutzer außerhalb des Modals klickt
