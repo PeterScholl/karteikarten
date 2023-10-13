@@ -65,6 +65,24 @@
     .footer-content {
       max-width: 800px;
       margin: 0 auto;
+    }
+    /* CSS für das Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 10% auto;
+        padding: 20px;
+        width: 80%;
+        border-radius: 5px;
     } 
     </style>
     <!-- MathJax-Konfiguration im head-Bereich -->
@@ -102,6 +120,8 @@
     <button id="shuffleCards">Karteikarten mischen</button>
     <button id="showAllCards">Alle Karteikarten anzeigen</button>
     <button id="showFileOptions">Dateiaktionen</button>
+    <button id="openModalButton">Karteikarte hinzufügen/bearbeiten</button>
+
     <div id="fileHandling" style="display: none;">
       <input type="file" id="fileInput">
       <a id="downloadLink" style="display: none" download="flashcards.csv" href="data:text/csv;charset=utf-8,"></a>
@@ -121,6 +141,26 @@
         </table>
     </div>
     </div> <!-- Ende von Hauptinhalt (content) - noetig fuer wrapper  -->
+    <!-- Modal -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span id="closeModalButton" style="float: right; cursor: pointer;">Schließen [X]</span>
+        <!-- Hier kannst du das Formular zum Bearbeiten oder Hinzufügen von Karteikarten platzieren -->
+        <form id="editCardForm">
+          <label for="modalQuestion">Frage:</label>
+          <input type="text" id="modalQuestion" name="modalQuestion" required>
+          <br>
+          <label for="modalAnswer">Antwort:</label>
+          <input type="text" id="modalAnswer" name="modalAnswer" required>
+          <br>
+          <input type="submit" value="Speichern">
+          <!-- Buttons für die Navigation -->
+          <button type="button" id="modalPreviousCardButton">Vorherige Karteikarte</button>
+          <button type="button" id="modalNextCardButton">Nächste Karteikarte</button>
+
+        </form>
+      </div>
+    </div>
     <!-- Footer -->
     <footer>
         <div class="footer-content">
@@ -336,6 +376,74 @@
       }
 	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, flashcardTableBody]); // Hier MathJax über die Tabelle auslösen
     }
+    
+    // JavaScript-Code zum Öffnen und Schließen des Modals
+    const openModalButton = document.getElementById('openModalButton');
+    const modal = document.getElementById('modal');
+    const closeModalButton = document.getElementById('closeModalButton');
+    const editCardForm = document.getElementById('editCardForm');
+    const questionInput = document.getElementById('modalQuestion');
+    const answerInput = document.getElementById('modalAnswer');
+    let modalCurrentCardIndex = 0; // Index der aktuellen Karteikarte
+
+    openModalButton.addEventListener('click', function() {
+      //Modal anzeigen
+      modal.style.display = 'block';
+      //Mit Karte füllen
+      modalDisplayCurrentCard();
+    });
+
+    closeModalButton.addEventListener('click', function() {
+      modal.style.display = 'none';
+    });
+    
+    editCardForm.addEventListener('submit', function(event) {
+      //Die Standard-Formularübermittlung wird verhindert
+      event.preventDefault();
+      // Hier kannst du die bearbeiteten Daten speichern oder verarbeiten
+      const editedCard = {
+          question: questionInput.value,
+          answer: answerInput.value
+      };
+      console.log('Bearbeitete Karteikarte:', editedCard);
+    });
+
+    // Funktion zum Anzeigen der aktuellen Karteikarte
+    function modalDisplayCurrentCard() {
+        const currentCard = flashcards[modalCurrentCardIndex];
+        questionInput.value = currentCard.question;
+        answerInput.value = currentCard.answer;
+    }
+    
+    
+    // Eventlistener für den "Vorherige Karteikarte"-Button
+    const modalPreviousCardButton = document.getElementById('modalPreviousCardButton');
+    modalPreviousCardButton.addEventListener('click', function() {
+      //Die Standard-Formularübermittlung wird verhindert
+      event.preventDefault();
+      if (modalCurrentCardIndex > 0) {
+          modalCurrentCardIndex--;
+          modalDisplayCurrentCard();
+      }
+    });
+
+    // Eventlistener für den "Nächste Karteikarte"-Button
+    const modalNextCardButton = document.getElementById('modalNextCardButton');
+    modalNextCardButton.addEventListener('click', function() {
+      //Die Standard-Formularübermittlung wird verhindert
+      event.preventDefault();
+      if (modalCurrentCardIndex < flashcards.length - 1) {
+          modalCurrentCardIndex++;
+          modalDisplayCurrentCard();
+      }
+    });
+
+    // Schließe das Modal, wenn der Benutzer außerhalb des Modals klickt
+    window.addEventListener('click', function(event) {
+      if (event.target == modal) {
+          modal.style.display = 'none';
+      }
+    });
   </script>
 </body>
 </html>
