@@ -101,7 +101,8 @@
     </div>
     <button id="shuffleCards">Karteikarten mischen</button>
     <button id="showAllCards">Alle Karteikarten anzeigen</button>
-    <div id="filehandling">
+    <button id="showFileOptions">Dateiaktionen</button>
+    <div id="fileHandling" style="display: none;">
       <input type="file" id="fileInput">
       <a id="downloadLink" style="display: none" download="flashcards.csv" href="data:text/csv;charset=utf-8,"></a>
       <button id="downloadButton">Flashcards als CSV herunterladen</button>
@@ -279,7 +280,7 @@
     const showAllCardsButton = document.getElementById('showAllCards');
     const flashcardView = document.getElementById('flashcardView');
     const flashcardTableBody = document.getElementById('flashcardTableBody');
-
+    
     showAllCardsButton.addEventListener('click', toggleAllCardsView);
 
     let isAllCardsViewVisible = false;
@@ -293,6 +294,25 @@
       } else {
         showAllCardsButton.classList.remove('active');
         flashcardView.style.display = 'none';
+      }
+    }
+
+    // hier kommt der Bereich zum Anzeigen der Dateiaktionen
+    const showFileOptionsButton = document.getElementById('showFileOptions');
+    const fileHandling = document.getElementById('fileHandling');
+
+    showFileOptionsButton.addEventListener('click', toggleFileHandlingView);
+
+    let isFileHandlingVisible = false;
+
+    function toggleFileHandlingView() {
+      isFileHandlingVisible = !isFileHandlingVisible;
+      if (isFileHandlingVisible) {
+        showFileOptionsButton.classList.add('active');
+        fileHandling.style.display = 'block';
+      } else {
+        showFileOptionsButton.classList.remove('active');
+        fileHandling.style.display = 'none';
       }
     }
 
