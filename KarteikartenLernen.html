@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Karteikarten Lernseite</title>
+    <style>
+        html, body {
+	    height: 100%;
+	}
+	
+        #flashcard {
+            text-align: center; /* Zentriert den Inhalt horizontal */
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #000; /* Fügt einen horizontalen Strich ein */
+        }
+	    table {
+		border-collapse: collapse;
+		width: 100%;
+	    }
+
+	    th, td {
+		border: 1px solid #000;
+		padding: 8px;
+		text-align: left;
+	    }
+
+	    tr:nth-child(even) {
+		background-color: #f2f2f2;
+	    }
+	    .button-container {
+		text-align: center; /* Zentriert den Container horizontal */
+	    }
+
+	    .button-container button {
+		display: inline-block; /* Zeigt die Buttons nebeneinander an */
+		margin: 10px; /* Fügt Abstand zwischen den Buttons hinzu */
+		padding: 10px 20px; /* Ändert die Polsterung, um die Größe zu erhöhen */
+		font-size: 16px; /* Ändert die Schriftgröße */
+	    }
+	    
+	    .active {
+		background-color: #007bff; /* Ändert die Hintergrundfarbe im aktivierten Zustand */
+		color: #fff; /* Ändert die Textfarbe im aktivierten Zustand */
+	    }
+	    
+	    .wrapper {
+		min-height: 100%;
+		display: flex;
+		flex-direction: column;
+	    }
+
+	    .content {
+		flex: 1;
+	    }
+	    
+	    footer {
+		background-color: #333;
+		color: #fff;
+		text-align: center;
+		padding: 10px 0;
+	    }
+
+	    .footer-content {
+		max-width: 800px;
+		margin: 0 auto;
+	    } 
+    </style>
+    <!-- MathJax-Konfiguration im head-Bereich -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            tex2jax: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            }
+        });
+    </script>
+    
+    <!-- MathJax-Script im head-Bereich -->
+    <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+</head>
+<body>
+    <div class="wrapper">
+    <div class="content">
+    <h1>Meine Karteikarten</h1>
+    <div id="flashcard">
+        <div id="question">
+            Frage hier
+        </div>
+        <hr> <!-- Horizontaler Strich -->
+        <div id="answer">
+            Antwort hier
+        </div>
+    </div>
+    <div class="button-container">
+	    <button id="showAnswer">Antwort anzeigen</button>
+	    <button id="nextCard">Nächste Karte</button>
+    </div>
+    <button id="shuffleCards">Karteikarten mischen</button>
+    <button id="showAllCards">Alle Karteikarten anzeigen</button>
+    <div id="flashcardView" style="display: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fragen</th>
+                    <th>Antworten</th>
+                </tr>
+            </thead>
+            <tbody id="flashcardTableBody">
+                <!-- Hier werden die Karteikarten eingefügt -->
+            </tbody>
+        </table>
+    </div>
+    </div> <!-- Ende von Hauptinhalt (content) - noetig fuer wrapper  -->
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>    <div id="dataCount">Anzahl der Datensätze: 0</div></p>
+            <p>Allgemeine Informationen: Hier findest du nützliche Informationen.</p>
+        </div>
+    </footer>
+    </div> <!-- Wrapper endet hier - nötig damit footer unten -->
+    <!-- Script-Bereich -->
+    <script>
+	// Lies den Query-Parameter 'file' aus der URL oder verwende einen Standardwert
+	const urlParams = new URLSearchParams(window.location.search);
+	const csvFile = urlParams.has('file') ? urlParams.get('file') : 'karteikarten.csv';
+        // Funktion zum Lesen von CSV in ein Array
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const result = [];
+            const headers = lines[0].split(',');
+            for (let i = 1; i < lines.length; i++) {
+		const currentLine = lines[i].split(',');
+		if (currentLine.length >= 2) {
+		    const questiontext = currentLine[0] ? currentLine[0].trim() : '';
+		    const answertext = currentLine[1] ? currentLine[1].trim() : '';
+ 		    if (questiontext !== '' || answertext !== '') {
+			const card = { question: questiontext, answer: answertext };
+		        result.push(card);
+		    }
+		}
+            }
+            return result;
+        }
+
+        const questionElement = document.getElementById('question');
+        const answerElement = document.getElementById('answer');
+        const showAnswerButton = document.getElementById('showAnswer');
+        const nextCardButton = document.getElementById('nextCard');
+        const dataCountElement = document.getElementById('dataCount');
+
+        showAnswerButton.addEventListener('click', () => {
+            answerElement.style.display = 'block';
+        });
+
+        nextCardButton.addEventListener('click', () => {
+            currentCard = (currentCard + 1) % flashcards.length;
+            questionElement.innerText = flashcards[currentCard].question;
+            answerElement.innerText = flashcards[currentCard].answer;
+            answerElement.style.display = 'none';
+            // Nachdem die neue Karteikarte geladen wurde, rufe MathJax auf, um die LaTeX-Syntax in dieser Karteikarte zu übersetzen.
+            // Hier wird "questionElement" verwendet, um die LaTeX-Syntax in der Frage der Karteikarte zu übersetzen
+	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, questionElement]); 
+	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, answerElement]); 
+
+        });
+
+        let currentCard = 0;
+        let flashcards = [];
+
+        // Funktion zum Laden der CSV-Datei
+        function loadCSVFile(url) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+            		throw new Error('Fehler beim Laden der Datei: ' + response.status);
+        	    }
+                    return response.text();
+                })
+                .then(data => {
+                    flashcards = parseCSV(data);
+                    showFlashcard();
+                    updateDataCount(flashcards.length);
+                })
+                .catch(error => {
+                    // Hier wird der Fehler behandelt und dem Benutzer eine Fehlermeldung angezeigt
+		    console.error('Fehler beim Laden der CSV-Datei: ' + error);
+		    alert('Die Datei konnte nicht gefunden oder geladen werden. Bitte überprüfen Sie die URL.');
+                });
+        }
+
+        // Funktion zum Anzeigen der aktuellen Karte
+        function showFlashcard() {
+            questionElement.innerText = flashcards[currentCard].question;
+            answerElement.innerText = flashcards[currentCard].answer;
+            answerElement.style.display = 'none';
+        }
+
+        // Zufällige Reihenfolge der Karten
+        function shuffleCards() {
+            for (let i = flashcards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+            }
+        }
+
+        // Funktion zum Aktualisieren der Datensatzanzahl
+        function updateDataCount(count) {
+            dataCountElement.innerText = `Anzahl der Datensätze: ${count}`;
+        }
+
+        // Lade die CSV-Datei (wird weiter oben definiert)
+        loadCSVFile(csvFile);
+
+        // Button für das Mischen
+        const shuffleCardsButton = document.getElementById('shuffleCards');
+	shuffleCardsButton.addEventListener('click', shuffleCards);
+
+        // hier kommt der Bereich zum Anzeigen aller Karteikarten
+        const showAllCardsButton = document.getElementById('showAllCards');
+        const flashcardView = document.getElementById('flashcardView');
+        const flashcardTableBody = document.getElementById('flashcardTableBody');
+
+        showAllCardsButton.addEventListener('click', toggleAllCardsView);
+
+        let isAllCardsViewVisible = false;
+
+        function toggleAllCardsView() {
+            isAllCardsViewVisible = !isAllCardsViewVisible;
+            if (isAllCardsViewVisible) {
+                showAllCardsButton.classList.add('active');
+                flashcardView.style.display = 'block';
+                renderAllFlashcards();
+            } else {
+                showAllCardsButton.classList.remove('active');
+                flashcardView.style.display = 'none';
+            }
+        }
+
+        function renderAllFlashcards() {
+            flashcardTableBody.innerHTML = ''; // Leert die Tabelle
+
+            // Schleife durch alle Karteikarten und füge sie zur Tabelle hinzu
+            for (let i = 0; i < flashcards.length; i++) {
+                const card = flashcards[i];
+                const row = document.createElement('tr');
+                const questionCell = document.createElement('td');
+                const answerCell = document.createElement('td');
+
+                questionCell.textContent = card.question;
+                answerCell.textContent = card.answer;
+
+                row.appendChild(questionCell);
+                row.appendChild(answerCell);
+
+                flashcardTableBody.appendChild(row);
+            }
+	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, flashcardTableBody]); // Hier MathJax über die Tabelle auslösen
+        }
+    </script>
+</body>
+</html>
+
