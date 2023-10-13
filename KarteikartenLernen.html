@@ -101,6 +101,11 @@
     </div>
     <button id="shuffleCards">Karteikarten mischen</button>
     <button id="showAllCards">Alle Karteikarten anzeigen</button>
+    <div id="filehandling">
+      <input type="file" id="fileInput">
+      <a id="downloadLink" style="display: none" download="flashcards.csv" href="data:text/csv;charset=utf-8,"></a>
+      <button id="downloadButton">Flashcards als CSV herunterladen</button>
+    </div>
     <div id="flashcardView" style="display: none;">
         <table>
             <thead>
@@ -207,6 +212,41 @@
             alert('Die Datei konnte nicht gefunden oder geladen werden. Bitte überprüfen Sie die URL.');
           });
     }
+    
+    //Funktion zum laden einer lokalen Datei
+    const fileInput = document.getElementById('fileInput');
+        
+    fileInput.addEventListener('change', function() {
+      const selectedFile = fileInput.files[0];
+      if (selectedFile) {
+        console.log('Ausgewählte Datei:', selectedFile);
+        // Hier kannst du den ausgewählten Dateiinhalt verarbeiten
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+          const fileContent = event.target.result;
+          // Hier hast du den Inhalt der CSV-Datei in der Variablen 'fileContent'
+          // Jetzt kannst du den Inhalt weiterverarbeiten und die Karteikarten erstellen oder ersetzen.
+          flashcards = parseCSV(fileContent);
+          showFlashcard();
+          updateDataCount(flashcards.length);
+        };
+
+        reader.readAsText(selectedFile);
+      }
+    });
+
+    // Funktionalität zum herunterladen der Karten als csv-Datei
+    const downloadButton = document.getElementById('downloadButton');
+    const downloadLink = document.getElementById('downloadLink');
+
+    downloadButton.addEventListener('click', function() {
+      const csvContent = flashcards.map(card => `${card.question},${card.answer}`).join('\n');
+
+      downloadLink.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+      downloadLink.style.display = 'block';
+      downloadLink.click();
+    });
 
     // Funktion zum Anzeigen der aktuellen Karte
     function showFlashcard() {
