@@ -130,18 +130,19 @@
     <button id="showFileOptions">Dateiaktionen</button>
     <button id="openModalButton">Karteikarte hinzufügen/bearbeiten</button>
 
-    <div id="fileHandling" style="display: none;">
+    <div id="fileHandling" style="display: none; margin-top: 20px; margin-bottom: 20px;">
       <input type="file" id="fileInput">
       <button id="downloadButton">Flashcards als CSV herunterladen</button>
       <a id="downloadLink" style="display: none" download="flashcards.csv" href="data:text/csv;charset=utf-8,"></a>
     </div>
     
-    <div id="flashcardView" style="display: none;">
+    <div id="flashcardView" style="display: none; margin-top: 20px; margin-bottom: 20px;">
         <table>
             <thead>
                 <tr>
                     <th>Fragen</th>
                     <th>Antworten</th>
+                    <th>Aktionen</th>
                 </tr>
             </thead>
             <tbody id="flashcardTableBody">
@@ -173,6 +174,7 @@
           <button type="button" id="modalPreviousCardButton">Vorherige Karteikarte</button>
           <button type="button" id="modalNextCardButton">Nächste Karteikarte</button>
           <button type="button" id="modalNewCardButton">Neue Karteikarte</button>
+          <button type="button" id="modalDuplicateCardButton">Duplizieren</button>
 
         </form>
         <!-- Erfolgsmeldung -->
@@ -247,6 +249,7 @@
             // Update Counter und currentCard
             showFlashcard();
             updateDataCount(flashcards.length);
+            renderAllFlashcards();
           })
           .catch(error => {
             // Hier wird der Fehler behandelt und dem Benutzer eine Fehlermeldung angezeigt
@@ -272,6 +275,7 @@
           flashcards = parseCSV(fileContent);
           showFlashcard();
           updateDataCount(flashcards.length);
+          renderAllFlashcards();
         };
 
         reader.readAsText(selectedFile);
@@ -295,13 +299,15 @@
       if (currentCard > flashcards.length-1) {
         currentCard = 0;
       }
-      questionElement.innerText = flashcards[currentCard].question;
-      answerElement.innerText = flashcards[currentCard].answer;
-      answerElement.style.display = 'none';
-      // Nachdem die neue Karteikarte geladen wurde, rufe MathJax auf, um die LaTeX-Syntax in dieser Karteikarte zu übersetzen.
-      // Hier wird "questionElement" verwendet, um die LaTeX-Syntax in der Frage der Karteikarte zu übersetzen
-	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, questionElement]); 
-	    MathJax.Hub.Queue(["Typeset", MathJax.Hub, answerElement]); 
+      if (flashcards[currentCard]) {
+        questionElement.innerText = flashcards[currentCard].question;
+        answerElement.innerText = flashcards[currentCard].answer;
+        answerElement.style.display = 'none';
+        // Nachdem die neue Karteikarte geladen wurde, rufe MathJax auf, um die LaTeX-Syntax in dieser Karteikarte zu übersetzen.
+        // Hier wird "questionElement" verwendet, um die LaTeX-Syntax in der Frage der Karteikarte zu übersetzen
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, questionElement]); 
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, answerElement]); 
+      }
     }
 
     // Zufällige Reihenfolge der Karten
@@ -318,7 +324,6 @@
     }
 
     // Lade die CSV-Datei (wird weiter oben definiert)
-    console.log('csvFile:', csvFile);
     loadCSVFile(csvFile);
 
     // Button für das Mischen
@@ -375,18 +380,57 @@
           const row = document.createElement('tr');
           const questionCell = document.createElement('td');
           const answerCell = document.createElement('td');
+          const actionsCell = document.createElement('td');
           
           questionCell.textContent = card.question;
           answerCell.textContent = card.answer;
 
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = 'Löschen';
+          deleteButton.className = 'delete-card';
+          deleteButton.setAttribute('data-card-id', i); // Eindeutige Kartenkennung
+          deleteButton.style.marginRight = '10px'; // Beispiel: 10px Abstand zwischen den Buttons
+
+          const editButton = document.createElement('button');
+          editButton.textContent = 'Bearbeiten';
+          editButton.className = 'edit-card';
+          editButton.setAttribute('data-card-id', i); // Eindeutige Kartenkennung
+    
+          actionsCell.appendChild(deleteButton);
+          actionsCell.appendChild(editButton);
+
           row.appendChild(questionCell);
           row.appendChild(answerCell);
+          row.appendChild(actionsCell);
 
           flashcardTableBody.appendChild(row);
         }
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, flashcardTableBody]); // Hier MathJax über die Tabelle auslösen
       }
     }
+    
+    // Funktion zum Löschen einer Karte
+    function deleteCard(cardId) {
+        // Hier kannst du die Logik zum Löschen der Karte implementieren, z. B.:
+        // cardData.splice(cardId, 1); // Entferne die Karte aus deinem Datenarray
+        flashcards.splice(cardId,1);
+        updateDataCount(flashcards.length);
+        // Rufe die Funktion zum Aktualisieren der Tabelle auf
+        renderAllFlashcards();
+    }
+
+    // Eventlistener für Löschen-Buttons
+    document.querySelector('table').addEventListener('click', function (e) {
+        if (e.target && e.target.matches('button.delete-card')) {
+          const cardId = e.target.getAttribute('data-card-id');
+          deleteCard(cardId);
+        } else if (e.target && e.target.matches('button.edit-card')) {
+          const cardId = e.target.getAttribute('data-card-id');
+          modalCurrentCardIndex = cardId;
+          modal.style.display = 'block';
+          modalDisplayCurrentCard();
+        }
+    });
     
     // JavaScript-Code zum Öffnen und Schließen des Modals
     const openModalButton = document.getElementById('openModalButton');
@@ -418,6 +462,7 @@
       };
       if (modalCurrentCardIndex >= 0 && modalCurrentCardIndex < flashcards.length) {
         flashcards[modalCurrentCardIndex]=editedCard;
+        renderAllFlashcards();
       } else {
         flashcards.push(editedCard);
         updateDataCount(flashcards.length);
@@ -483,6 +528,14 @@
       event.preventDefault();
       modalCurrentCardIndex=-1;
       modalDisplayCurrentCard();
+    });
+
+    // Eventlistener für den "Duplizieren"-Button
+    const modalDuplicateCardButton = document.getElementById('modalDuplicateCardButton');
+    modalDuplicateCardButton.addEventListener('click', function() {
+      //Die Standard-Formularübermittlung wird verhindert
+      event.preventDefault();
+      modalCurrentCardIndex=-1;
     });
 
     // Schließe das Modal, wenn der Benutzer außerhalb des Modals klickt
