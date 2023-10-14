@@ -113,11 +113,11 @@
     <div class="content">
     <h1>Meine Karteikarten</h1>
     <div id="flashcard">
-        <div id="question">
+        <div id="question" class="card-text">
             Frage hier
         </div>
         <hr> <!-- Horizontaler Strich -->
-        <div id="answer">
+        <div id="answer" class="card-text">
             Antwort hier
         </div>
     </div>
@@ -125,6 +125,8 @@
 	    <button id="showAnswer">Antwort anzeigen</button>
 	    <button id="nextCard">Nächste Karte</button>
     </div>
+    <button id="increaseFontSize">Schrift vergrößern</button>
+    <button id="decreaseFontSize">Schrift verkleinern</button>
     <button id="shuffleCards">Karteikarten mischen</button>
     <button id="showAllCards">Alle Karteikarten anzeigen</button>
     <button id="showFileOptions">Dateiaktionen</button>
@@ -309,6 +311,31 @@
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, answerElement]); 
       }
     }
+
+    // Funktionen zur Veränderung der Karten-Schriftgröße
+    const increaseFontSizeButton = document.getElementById('increaseFontSize');
+    const decreaseFontSizeButton = document.getElementById('decreaseFontSize');
+
+    const cardTextElements = document.querySelectorAll('.card-text'); // Annahme: Diese Klasse wird für die Frage und Antwort verwendet
+
+    let currentFontSize = 16; // Standard-Schriftgröße (in Pixel)
+
+    increaseFontSizeButton.addEventListener('click', function() {
+        currentFontSize += 2; // Erhöhe die Schriftgröße um 2 Pixel
+        updateCardTextSize();
+    });
+
+    decreaseFontSizeButton.addEventListener('click', function() {
+        currentFontSize -= 2; // Verringere die Schriftgröße um 2 Pixel
+        updateCardTextSize();
+    });
+
+    function updateCardTextSize() {
+        for (const element of cardTextElements) {
+            element.style.fontSize = currentFontSize + 'px';
+        }
+    }
+
 
     // Zufällige Reihenfolge der Karten
     function shuffleCards() {
