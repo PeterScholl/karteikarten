@@ -8,6 +8,7 @@
     
     #flashcard {
       text-align: center; /* Zentriert den Inhalt horizontal */
+      margin-top: 30px;
     }
     
     hr {
@@ -30,6 +31,8 @@
     }
     
     .button-container {
+      margin-top: 40px;
+      margin-bottom: 80px;
       text-align: center; /* Zentriert den Container horizontal */
     }
     
@@ -103,9 +106,9 @@
         });
     </script>
     
-    <!-- MathJax-Script im head-Bereich -->
-    <script type="text/javascript" async
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+    <!-- MathJax-Script im head-Bereich - ich habe async raus genommen -->
+    <script type="text/javascript" 
+            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
     </script>
 </head>
 <body>
@@ -116,9 +119,9 @@
         <div id="question" class="card-text">
             Frage hier
         </div>
-        <hr> <!-- Horizontaler Strich -->
         <div id="answer" class="card-text">
-            Antwort hier
+          <hr> <!-- Horizontaler Strich -->
+          Antwort hier
         </div>
     </div>
     <div class="button-container">
@@ -188,7 +191,8 @@
     <footer>
         <div class="footer-content">
             <p>    <div id="dataCount">Anzahl der Datensätze: 0</div></p>
-            <p>Allgemeine Informationen: Hier findest du nützliche Informationen.</p>
+            <p>Programmiert mit Unterstützung von ChatGPT als kleines Lernprojekt.<br>
+            von Peter Scholl (scholl at unterrichtsportal.org) - Quelltext auf <a href="https://github.com/PeterScholl/karteikarten">github</a></p>
         </div>
     </footer>
     </div> <!-- Wrapper endet hier - nötig damit footer unten -->
@@ -302,8 +306,8 @@
         currentCard = 0;
       }
       if (flashcards[currentCard]) {
-        questionElement.innerText = flashcards[currentCard].question;
-        answerElement.innerText = flashcards[currentCard].answer;
+        questionElement.innerHTML = flashcards[currentCard].question;
+        answerElement.innerHTML = "<hr>"+flashcards[currentCard].answer;
         answerElement.style.display = 'none';
         // Nachdem die neue Karteikarte geladen wurde, rufe MathJax auf, um die LaTeX-Syntax in dieser Karteikarte zu übersetzen.
         // Hier wird "questionElement" verwendet, um die LaTeX-Syntax in der Frage der Karteikarte zu übersetzen
@@ -318,7 +322,7 @@
 
     const cardTextElements = document.querySelectorAll('.card-text'); // Annahme: Diese Klasse wird für die Frage und Antwort verwendet
 
-    let currentFontSize = 16; // Standard-Schriftgröße (in Pixel)
+    let currentFontSize = 40; // Standard-Schriftgröße (in Pixel)
 
     increaseFontSizeButton.addEventListener('click', function() {
         currentFontSize += 2; // Erhöhe die Schriftgröße um 2 Pixel
@@ -335,6 +339,7 @@
             element.style.fontSize = currentFontSize + 'px';
         }
     }
+    updateCardTextSize(); //Einmal auf den eingestellten Wert setzen
 
 
     // Zufällige Reihenfolge der Karten
