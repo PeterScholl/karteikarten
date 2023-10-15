@@ -134,6 +134,7 @@
     <button id="showAllCards">Alle Karteikarten anzeigen</button>
     <button id="showFileOptions">Dateiaktionen</button>
     <button id="openModalButton">Karteikarte hinzufügen/bearbeiten</button>
+    <button id="previousCard">Vorherige Karte</button>
 
     <div id="fileHandling" style="display: none; margin-top: 20px; margin-bottom: 20px;">
       <input type="file" id="fileInput">
@@ -227,6 +228,7 @@
     const answerElement = document.getElementById('answer');
     const showAnswerButton = document.getElementById('showAnswer');
     const nextCardButton = document.getElementById('nextCard');
+    const previousCardButton = document.getElementById('previousCard');
     const dataCountElement = document.getElementById('dataCount');
 
     showAnswerButton.addEventListener('click', () => {
@@ -235,6 +237,11 @@
 
     nextCardButton.addEventListener('click', () => {
       currentCard = (currentCard + 1) % flashcards.length;
+      showFlashcard();
+    });
+
+    previousCardButton.addEventListener('click', () => {
+      currentCard = (flashcards.length+currentCard - 1) % flashcards.length;
       showFlashcard();
     });
 
