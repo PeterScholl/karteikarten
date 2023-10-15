@@ -7,6 +7,8 @@
     html, body { height: 100%; }
     
     #flashcard {
+      max-width: 75%;
+      margin: 0 auto; /* Zum Zentrieren der Karteikarte horizontal */
       text-align: center; /* Zentriert den Inhalt horizontal */
       margin-top: 30px;
     }
@@ -197,8 +199,23 @@
         </div>
     </footer>
     </div> <!-- Wrapper endet hier - nötig damit footer unten -->
+
     <!-- Script-Bereich -->
     <script>
+      
+    // Key-Listener einbauen
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && event.key === '+') {
+          // Hier deinen Code zum Vergrößern der Schriftgröße einfügen
+          event.preventDefault(); // Verhindert, dass der Browser die Standardaktion ausführt
+          increaseFontSizeButton.click();
+      } else if (event.ctrlKey && event.key === '-') {
+        // Reagiere auf Strg-Minus (-)
+        event.preventDefault();
+        decreaseFontSizeButton.click();
+      }
+    });
+
     // Lies den Query-Parameter 'file' aus der URL oder verwende einen Standardwert
     const urlParams = new URLSearchParams(window.location.search);
     const csvFile = urlParams.has('file') ? urlParams.get('file') : 'karteikarten.csv';
