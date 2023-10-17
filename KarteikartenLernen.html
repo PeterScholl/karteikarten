@@ -222,9 +222,36 @@
         } else { //Antwort wird angezeigt
           nextCardButton.click();
         }
+      } else if (event.key === 't') {
+        event.preventDefault();
+        increaseMathJaxFontSize(4);
       }
     });
+    
+    //Test-Funktion zur Anpassung der Math-Jax-Elemente
+    function increaseMathJaxFontSize(increaseBy) {
+      // Finde alle Elemente mit der Klasse .MathJax
+      const mathJaxElements = document.querySelectorAll('.mjx-chtml');
+      console.log('t gedrückt :-)');
 
+      // Iteriere über alle MathJax-Elemente
+      mathJaxElements.forEach(function(element) {
+        console.log('Math-Jax Element gefunden');
+        // Lese die aktuelle Schriftgröße als Zeichenkette (z.B., "16px")
+        const currentFontSizeString = window.getComputedStyle(element, null).getPropertyValue('font-size');
+        console.log('mit Fontsize'+currentFontSizeString);
+        // Extrahiere den numerischen Wert der aktuellen Schriftgröße
+        const currentFontSize = parseFloat(currentFontSizeString);
+
+        // Überprüfe, ob die aktuelle Schriftgröße gültig ist und erhöhe sie um den angegebenen Wert
+        if (!isNaN(currentFontSize)) {
+          const newFontSize = currentFontSize + increaseBy;
+          console.log('neue Fontsize'+newFontSize);
+          element.style.fontSize = newFontSize + 'px';
+        }
+      });
+    }
+    
     // Lies den Query-Parameter 'file' aus der URL oder verwende einen Standardwert
     const urlParams = new URLSearchParams(window.location.search);
     const csvFile = urlParams.has('file') ? urlParams.get('file') : 'karteikarten.csv';
