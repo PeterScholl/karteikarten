@@ -112,6 +112,9 @@
     <script type="text/javascript" 
             src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
     </script>
+    <!-- Papaparse-Bibliothek einbinden -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
 </head>
 <body>
     <div class="wrapper">
@@ -213,8 +216,7 @@
         // Reagiere auf Strg-Minus (-)
         event.preventDefault();
         decreaseFontSizeButton.click();
-      } else if (event.key === 'Enter') {
-        // Reagiere auf Strg-Minus (-)
+      } else if (event.ctrlKey && event.key === 'Enter') {
         event.preventDefault();
         if (answerElement.style.display === 'none') {
           //Antwort ist noch nicht angezeigt
@@ -222,8 +224,8 @@
         } else { //Antwort wird angezeigt
           nextCardButton.click();
         }
-      } else if (event.key === 't') {
-        event.preventDefault();
+      } else if (event.ctrlKey && event.key === 't') {
+        //event.preventDefault();
         increaseMathJaxFontSize(4);
       }
     });
@@ -276,6 +278,35 @@
 
       return result;
     }
+    
+    // Parsen der CSV-Datei mit PapaParse
+    function parseCSVWithoutHeader(csvString) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(csvString, {
+                header: false, // Keine Header-Zeile
+                delimiter: ',',
+                quoteChar: '"',
+                dynamicTyping: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        reject(results.errors);
+                    } else {
+                        const data = results.data.map(item => {
+                            return {
+                                question: item[0], // Erste Spalte
+                                answer: item[1],   // Zweite Spalte
+                                // Weitere Felder hier, falls vorhanden
+                            };
+                        });
+                        resolve(data);
+                    }
+                }
+            });
+        });
+    }
+
+
+
 
     const questionElement = document.getElementById('question');
     const answerElement = document.getElementById('answer');
@@ -311,11 +342,27 @@
             return response.text();
           })
           .then(data => {
+            /* //alte Version
             flashcards = parseCSV(data);
             // Update Counter und currentCard
             showFlashcard();
             updateDataCount(flashcards.length);
             renderAllFlashcards();
+            */
+            //neue Version mit PapaParse
+            parseCSVWithoutHeader(data)
+              .then(data => {
+                  console.log(data);
+                  // Hier kannst du die Daten verwenden, die im gewünschten Format vorliegen
+                  flashcards = data;
+                  showFlashcard();
+                  updateDataCount(flashcards.length);
+                  renderAllFlashcards();
+              })
+              .catch(errors => {
+                  console.error('Fehler beim Parsen der CSV-Datei:', errors);
+                  // Hier kannst du Fehlerbehandlung durchführen
+              });
           })
           .catch(error => {
             // Hier wird der Fehler behandelt und dem Benutzer eine Fehlermeldung angezeigt
@@ -337,11 +384,26 @@
         reader.onload = function(event) {
           const fileContent = event.target.result;
           // Hier hast du den Inhalt der CSV-Datei in der Variablen 'fileContent'
-          // Jetzt kannst du den Inhalt weiterverarbeiten und die Karteikarten erstellen oder ersetzen.
+          /* alte Version
           flashcards = parseCSV(fileContent);
           showFlashcard();
           updateDataCount(flashcards.length);
           renderAllFlashcards();
+          */
+          //neue Version mit PapaParse
+          parseCSVWithoutHeader(fileContent)
+            .then(data => {
+                console.log(data);
+                // Hier kannst du die Daten verwenden, die im gewünschten Format vorliegen
+                flashcards = data;
+                showFlashcard();
+                updateDataCount(flashcards.length);
+                renderAllFlashcards();
+            })
+            .catch(errors => {
+                console.error('Fehler beim Parsen der CSV-Datei:', errors);
+                // Hier kannst du Fehlerbehandlung durchführen
+            });
         };
 
         reader.readAsText(selectedFile);
@@ -353,8 +415,26 @@
     const downloadLink = document.getElementById('downloadLink');
 
     downloadButton.addEventListener('click', function() {
-      const csvContent = flashcards.map(card => `${card.question},${card.answer}`).join('\n');
+      //const csvContent = flashcards.map(card => `${card.question},${card.answer}`).join('\n');
+      //CSV-content wird jetzt mit " gespeichert für die Nutzung von Kommata
+      /* // Filtere Karteikarten, bei denen weder question noch answer eine Zeichenkette sind
+      const validFlashcards = flashcards.filter(card => {
+        return typeof card.question === 'string' && typeof card.answer === 'string';
+      }); */
 
+      // Filtere Karteikarten und konvertiere alles in Zeichenketten
+      const validFlashcards = flashcards.filter(card => {
+        const question = typeof card.question === 'string' ? card.question : card.question.toString();
+        const answer = typeof card.answer === 'string' ? card.answer : card.answer.toString();
+        card.question = question;
+        card.answer = answer;
+        return typeof card.question === 'string' && typeof card.answer === 'string';
+      });
+
+      // Konvertiere die validen Karteikarten in CSV mit doppelten Anführungszeichen wenn vorhanden
+      const csvContent = validFlashcards
+        .map(card => `"${card.question.replace(/"/g, '""')}","${card.answer.replace(/"/g, '""')}"`)
+        .join('\n');
       downloadLink.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
       downloadLink.style.display = 'block';
       downloadLink.click();
